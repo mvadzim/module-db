@@ -1,5 +1,5 @@
 {
-    "name":"codeception/module-db",
+    "name":"mvadzim/module-db",
     "description":"WebDriver module for Codeception",
     "keywords":["codeception", "browser-testing", "acceptance-testing"],
     "homepage":"http://codeception.com/",
