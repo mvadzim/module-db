@@ -18,19 +18,10 @@ class ClickHouseMySql extends Db
 
     public function cleanup()
     {
-        $this->dbh->exec('SET FOREIGN_KEY_CHECKS=0;');
-        $res = $this->dbh->query("SHOW FULL TABLES WHERE TABLE_TYPE LIKE '%TABLE';")->fetchAll();
+        $res = $this->dbh->query("SHOW TABLES;")->fetchAll();
         foreach ($res as $row) {
-            $this->dbh->exec('drop table `' . $row[0] . '`');
+            $this->dbh->exec('DROP TABLE `' . $row[0] . '`');
         }
-        $this->dbh->exec('SET FOREIGN_KEY_CHECKS=1;');
-    }
-
-    protected function sqlQuery($query)
-    {
-        $this->dbh->exec('SET FOREIGN_KEY_CHECKS=0;');
-        parent::sqlQuery($query);
-        $this->dbh->exec('SET FOREIGN_KEY_CHECKS=1;');
     }
 
     public function getQuotedName($name)
@@ -52,8 +43,14 @@ class ClickHouseMySql extends Db
             );
             $keys = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             if ($keys) {
-                $keys = $keys[0];
-                $primaryKey [] = $keys['primary_key'] !== '' ? $keys['primary_key'] : $keys['sorting_key'];
+                $keys = $keys[0]['primary_key'] !== '' ? $keys[0]['primary_key'] : $keys[0]['sorting_key'];
+                $keys = explode(', ', $keys);
+                foreach ($keys as $key => $value) {
+                    if (!preg_match('/^[a-zA-Z_][0-9a-zA-Z_]*$/', $value)) {
+                        unset($keys[$key]);
+                    }
+                }
+                $primaryKey = $keys;
             }
             $this->primaryKeys[$tableName] = $primaryKey;
         }
@@ -65,5 +62,20 @@ class ClickHouseMySql extends Db
         $where = $this->generateWhereClause($criteria);
         $query = 'ALTER TABLE ' . $this->getQuotedName($table) . ' DELETE ' . $where;
         $this->executeQuery($query, array_values($criteria));
+    }
+
+    public function update($table, array $data, array $criteria)
+    {
+        if (empty($data)) {
+            throw new \InvalidArgumentException(
+                "Query update can't be prepared without data."
+            );
+        }
+        $set = [];
+        foreach ($data as $column => $value) {
+            $set[] = $this->getQuotedName($column) . " = ?";
+        }
+        $where = $this->generateWhereClause($criteria);
+        return sprintf('ALTER TABLE %s UPDATE %s %s;', $this->getQuotedName($table), implode(', ', $set), $where);
     }
 }
