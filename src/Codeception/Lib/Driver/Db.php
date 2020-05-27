@@ -52,7 +52,7 @@ class Db
      * @see http://php.net/manual/en/pdo.construct.php
      * @see http://php.net/manual/de/ref.pdo-mysql.php#pdo-mysql.constants
      *
-     * @return Db|SqlSrv|MySql|Oci|PostgreSql|Sqlite
+     * @return Db|SqlSrv|MySql|ClickHouseMySql|Oci|PostgreSql|Sqlite
      */
     public static function create($dsn, $user, $password, $options = null)
     {
@@ -63,6 +63,8 @@ class Db
                 return new Sqlite($dsn, $user, $password, $options);
             case 'mysql':
                 return new MySql($dsn, $user, $password, $options);
+            case 'clickhouse-mysql':
+                return new ClickHouseMySql($dsn, $user, $password, $options);
             case 'pgsql':
                 return new PostgreSql($dsn, $user, $password, $options);
             case 'mssql':
