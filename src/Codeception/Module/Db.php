@@ -264,7 +264,7 @@ class Db extends CodeceptionModule implements DbInterface
 
     protected function getDatabases()
     {
-        $databases = [$this->currentDatabase => $this->config];
+        $databases = [self::DEFAULT_DATABASE => $this->config];
 
         if (!empty($this->config['databases'])) {
             foreach ($this->config['databases'] as $databaseKey => $databaseConfig) {
