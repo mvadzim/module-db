@@ -2,6 +2,8 @@
 
 namespace Codeception\Lib\Driver;
 
+use Codeception\Exception\ModuleException;
+
 class ClickHouseMySql extends Db
 {
     public function __construct($dsn, $user, $password, $options = null)
@@ -77,5 +79,30 @@ class ClickHouseMySql extends Db
         }
         $where = $this->generateWhereClause($criteria);
         return sprintf('ALTER TABLE %s UPDATE %s %s;', $this->getQuotedName($table), implode(', ', $set), $where);
+    }
+    
+    public function executeQuery($query, array $params)
+    {
+        $sth = parent::executeQuery($query, $params);
+        $errorMsg = $sth->errorInfo()[2];
+        if (!is_null($errorMsg)) {
+            throw new ModuleException(
+                'Codeception\Module\Db',
+                $errorMsg . "\nSQL query being executed: " . $query
+            );
+        }
+        return $sth;
+    }
+
+    protected function sqlQuery($query)
+    {
+        $this->dbh->exec($query);
+        $errorMsg = $this->getDbh()->errorInfo()[2];
+        if (!is_null($errorMsg)) {
+            throw new ModuleException(
+                'Codeception\Module\Db',
+                $errorMsg . "\nSQL query being executed: " . $query
+            );
+        }
     }
 }
